@@ -86,6 +86,12 @@ combinaciones = [
 n = 4  # Nivel de profundidad
 combinaciones = generar_combinaciones_exponenciales(n)
 
-resultado = sumar_columnas_por_combinacion(trans_matrix, combinaciones[1])
-print("Nueva matriz:\n", resultado)
+matrizCondicionalAt1 = sumar_columnas_por_combinacion(trans_matrix, combinaciones[0])
+matrizCondicionalAt2 = sumar_columnas_por_combinacion(trans_matrix, combinaciones[1])
+matrizCondicionalAt3 = sumar_columnas_por_combinacion(trans_matrix, combinaciones[2])
+print("Nueva matriz:\n", matrizCondicionalAt1)
+print("Nueva matriz:\n", matrizCondicionalAt2)
+print("Nueva matriz:\n", matrizCondicionalAt3)
+
+
 
