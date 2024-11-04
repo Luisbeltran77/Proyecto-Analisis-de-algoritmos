@@ -22,6 +22,14 @@ trans_matrix = np.array([
     ])
 
 
+# Genera una secuencia de 0s y 1s con patrones repetitivos exponenciales
+def generar_combinaciones_exponenciales(n):
+    combinaciones = []
+    for i in range(n):
+        repeticion = 2**i
+        array = np.tile([0] * repeticion + [1] * repeticion, 2**(n - i - 1))
+        combinaciones.append(array)
+    return combinaciones
 
 
     # Genera una secuencia de 0s y 1s con patrones repetitivos exponenciales
@@ -46,8 +54,8 @@ def generar_combinaciones_exponenciales_t1(n):
         # Guardar el patrón completo
         patrones.append(patron_completo)
         # Imprimir la letra seguida de su patrón
-        print(letra, end=' ')
-        print(' '.join(map(str, patron_completo)))
+        #print(letra, end=' ')
+        #print(' '.join(map(str, patron_completo)))
     return patrones
 
 def generar_combinaciones_exponenciales_t(n):
@@ -65,13 +73,13 @@ def generar_combinaciones_exponenciales_t(n):
     combinacion = combinacion[:, ::-1]
     
     # Generamos los encabezados de letras dinámicamente según el número de columnas
-    letras = list(string.ascii_uppercase[:n])[::]  # Invertir para empezar desde la última
+    #letras = list(string.ascii_uppercase[:n])[::]  # Invertir para empezar desde la última
     
     # Mostrar la matriz con los encabezados de letras
-    print("Combinaciones en t:")
-    print(" ".join(letras))  # Imprimir encabezados
-    for fila in combinacion:
-        print(" ".join(map(str, fila)))  # Imprimir cada fila
+    #print("Combinaciones en t:")
+    #print(" ".join(letras))  # Imprimir encabezados
+    #for fila in combinacion:
+    #    print(" ".join(map(str, fila)))  # Imprimir cada fila
     return combinacion
 
 
@@ -96,6 +104,7 @@ def identificar_posiciones(combinacion):
 """ Suma las columnas de la matriz basándose en la combinación binaria. 
     -Args: matriz (np.ndarray): La matriz de entrada. combinacion (list): Lista de 0s y 1s.
     -Returns: np.ndarray: Nueva matriz con las sumas de las columnas correspondientes. """
+    
 def independicia_condicional(matriz, combinacion):
 
     # Identificar posiciones
@@ -203,17 +212,53 @@ def filtrar_y_marginalizar(combinaciones_originales, estado_inicial, sistema_can
     
     return trans_matrix_marginalizada
 
+def imprimir_tablas_transicion(matrices):
+    """
+    Imprime una lista de matrices de transición en un formato legible,
+    con cada matriz acomodada una al lado de la otra.
+    """
+    num_matrices = len(matrices)
+    headers = [f"Matriz {chr(65 + i)}(t+1)" for i in range(num_matrices)]
 
-# Ejemplo de uso
-n = 4  # Nivel de profundidad
-print("Combinaciones en t + 1 ")
-combinaciones_t1 = generar_combinaciones_exponenciales_t1(n)
-combinaciones_t = generar_combinaciones_exponenciales_t(n)
+    # Obtener la cantidad de filas en cada matriz para alineación
+    num_filas = matrices[0].shape[0]
+    separator = "        "  # Espacio entre matrices para alinearlas
+
+    # Imprimir encabezado de matrices
+    header_row = separator.join([f"{header:>10}" for header in headers])
+    print(header_row)
+
+    # Imprimir subencabezados de columnas
+    sub_header_row = separator.join(["0         1  " for _ in range(num_matrices)])
+    print(sub_header_row)
+
+    # Separador de línea
+    print(separator.join(["-" * 12 for _ in range(num_matrices)]))
+
+    # Imprimir filas de cada matriz en paralelo
+    for i in range(num_filas):
+        row = separator.join([f"{int(matrices[j][i, 0])}      {int(matrices[j][i, 1])}     " for j in range(num_matrices)])
+        print(row)
+
+def producto_tensorial(matrices):
+    # Inicializa el resultado con la primera matriz
+    resultado = matrices[0]
+    
+    # Aplica el producto tensorial secuencialmente
+    for matriz in matrices[1:]:
+        resultado = np.kron(resultado, matriz)
+    
+    return resultado
+
 
 # Ejemplo de uso
 estado_inicial = "1000"  # Puede ser cualquier longitud
 sistema_candidatos = "ABC"  # Puede incluir cualquier letra del estado inicial
+profundidad_inicial = len(estado_inicial)  # Nivel de profundidad
 
+
+combinaciones_t1 = generar_combinaciones_exponenciales_t1(profundidad_inicial)
+combinaciones_t = generar_combinaciones_exponenciales_t(profundidad_inicial)
 resultado, letras_restantes, trans_matrix_filtrada = filtrar_combinaciones(combinaciones_t, estado_inicial, sistema_candidatos, trans_matrix)
 
 # Imprimir resultado
@@ -231,34 +276,26 @@ estado_inicial = "1000"
 sistema_candidatos = "ABC"  # Note que D no está incluida
 matriz_resultado = filtrar_y_marginalizar(combinaciones_t, estado_inicial, sistema_candidatos, trans_matrix)
 profundidad = len(sistema_candidatos)
-
-
-
-print("Matriz marginalizada: ")
+print("Matriz marginalizada: ") 
 print(matriz_resultado)
 
 
-resultadoA = independicia_condicional(matriz_resultado, resultado)
-print("Matriz A: ")
-print(resultadoA)
-resultadoB = independicia_condicional(matriz_resultado, resultado)
-print("Matriz B: ")
-print(resultadoB)
-resultadoC = independicia_condicional(matriz_resultado, resultado)
-print("Matriz C: ")
-print(resultadoC)
+# Nivel de profundidad
+combinaciones = generar_combinaciones_exponenciales(profundidad)
+
+# Ejemplo de uso
+resultadoA = independicia_condicional(matriz_resultado, combinaciones[0])
+resultadoB = independicia_condicional(matriz_resultado, combinaciones[1])
+resultadoC = independicia_condicional(matriz_resultado, combinaciones[2])
 matriz_condicional = [resultadoA, resultadoB, resultadoC]
-print("Matriz: ")
-print(matriz_condicional)
+imprimir_tablas_transicion(matriz_condicional)
 
-"""
-# Encabezados de las matriz_condicional
-headers = ["A", "B", "C", "D", "E"]  # Puedes añadir más nombres si hay más matriz_condicional
+# Cambia la configuración de impresión para mostrar la matriz completa
+np.set_printoptions(threshold=np.inf)
+# Restablecer la configuración de impresión a la predeterminada
+np.set_printoptions(threshold=1000)
 
-# Imprimir encabezados con tabulación entre ellos
-print("\t".join([f"{header}" for header in headers]))
 
-# Imprimir cada fila de las matriz_condicional con tabulación
-for row in range(matriz_condicional[0].shape[0]):
-    print("\t".join(["\t".join(map(str, matriz_condicional[i][row])) for i in range(len(matriz_condicional))]))
-"""
+# Ejemplo de uso Producto tensorial
+resultado_tensorial = producto_tensorial([resultadoA, resultadoB, resultadoC])
+print(resultado_tensorial)
