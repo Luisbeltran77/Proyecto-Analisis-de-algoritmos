@@ -262,3 +262,73 @@ print("\t".join([f"{header}" for header in headers]))
 for row in range(matriz_condicional[0].shape[0]):
     print("\t".join(["\t".join(map(str, matriz_condicional[i][row])) for i in range(len(matriz_condicional))]))
 """
+
+def generar_tablas_transicion(combinaciones_t, trans_matrix):
+    """
+    Genera tablas de transición para cada variable en t+1 basado en las combinaciones en t.
+    
+    Args:
+        combinaciones_t: Lista de combinaciones en tiempo t
+        trans_matrix: Matriz de transición marginalizada
+    
+    Returns:
+        Dict con las tablas de probabilidad para cada variable
+    """
+    # Determinar el número de variables basado en la longitud de las combinaciones
+    n_variables = len(combinaciones_t[0])
+    n_combinaciones = len(combinaciones_t)
+    
+    # Crear el sistema de variables automáticamente (A, B, C, etc.)
+    variables = list(string.ascii_uppercase[:n_variables])
+    
+    tablas = {}
+    
+    for i, variable in enumerate(variables):
+        # Crear tabla para la variable actual
+        tabla = np.zeros((n_combinaciones, 2))  # 2 columnas: para 0 y 1 en t+1
+        
+        # Para cada combinación en t
+        for j, comb_actual in enumerate(combinaciones_t):
+            # Obtener las filas de la matriz de transición donde la variable i es 0 y 1
+            prob_0 = 0
+            prob_1 = 0
+            
+            # Recorrer la fila correspondiente en la matriz de transición
+            fila_trans = trans_matrix[j]
+            for k, prob in enumerate(fila_trans):
+                if prob > 0:
+                    # Determinar si en esta transición la variable i es 0 o 1
+                    # Para esto, necesitamos convertir k a binario y ver el bit i
+                    estado_siguiente = format(k, f'0{n_variables}b')
+                    if estado_siguiente[i] == '0':
+                        prob_0 += prob
+                    else:
+                        prob_1 += prob
+            
+            tabla[j, 0] = prob_0
+            tabla[j, 1] = prob_1
+            
+        tablas[variable] = tabla
+        
+    return tablas
+
+def imprimir_tablas_transicion(tablas, combinaciones_t):
+    """
+    Imprime las tablas de transición en un formato legible
+    """
+    variables = list(tablas.keys())
+    
+    for variable in variables:
+        print(f"\nTabla de transición para {variable}(t+1):")
+        print(f"{' '.join(variables)} | 0 1")
+        print("-" * (len(variables)*2 + 6))
+        
+        for i, comb in enumerate(combinaciones_t):
+            comb_str = " ".join(map(str, comb))
+            probs = tablas[variable][i]
+            print(f"{comb_str} | {probs[0]:.1f} {probs[1]:.1f}")
+
+
+# Generar y mostrar las tablas
+tablas = generar_tablas_transicion(combinaciones_t, trans_matrix_filtrada)
+imprimir_tablas_transicion(tablas, combinaciones_t)
