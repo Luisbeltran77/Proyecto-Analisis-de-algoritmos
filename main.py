@@ -105,20 +105,23 @@ def identificar_posiciones(combinacion):
     -Args: matriz (np.ndarray): La matriz de entrada. combinacion (list): Lista de 0s y 1s.
     -Returns: np.ndarray: Nueva matriz con las sumas de las columnas correspondientes. """
     
-def independicia_condicional(matriz, combinacion):
+def independicia_condicional(matriz, combinaciones):
+    arreglo_matrices =[]
 
-    # Identificar posiciones
-    vector_0, vector_1 = identificar_posiciones(combinacion)
+    for combinacion in combinaciones:
+      # Identificar posiciones
+      vector_0, vector_1 = identificar_posiciones(combinacion)
 
-    # Crear una nueva matriz para almacenar los resultados
-    filas = matriz.shape[0]
-    nueva_matriz = np.zeros((filas, 2))
+      # Crear una nueva matriz para almacenar los resultados
+      filas = matriz.shape[0]
+      nueva_matriz = np.zeros((filas, 2))
 
-    # Sumar las columnas correspondientes a 0 y 1
-    nueva_matriz[:, 0] = matriz[:, vector_0].sum(axis=1)  # Sumar columnas correspondientes a 0
-    nueva_matriz[:, 1] = matriz[:, vector_1].sum(axis=1)  # Sumar columnas correspondientes a 1
+      # Sumar las columnas correspondientes a 0 y 1
+      nueva_matriz[:, 0] = matriz[:, vector_0].sum(axis=1)  # Sumar columnas correspondientes a 0
+      nueva_matriz[:, 1] = matriz[:, vector_1].sum(axis=1)  # Sumar columnas correspondientes a 1
+      arreglo_matrices.append(nueva_matriz)
 
-    return nueva_matriz
+    return arreglo_matrices
 
 
 
@@ -240,15 +243,35 @@ def imprimir_tablas_transicion(matrices):
         row = separator.join([f"{int(matrices[j][i, 0])}      {int(matrices[j][i, 1])}     " for j in range(num_matrices)])
         print(row)
 
-def producto_tensorial(matrices):
-    # Inicializa el resultado con la primera matriz
-    resultado = matrices[0]
+def producto_tensorial(M1, M2):
+    """
+    Calcula el producto tensorial entre dos matrices M1 y M2.
     
-    # Aplica el producto tensorial secuencialmente
-    for matriz in matrices[1:]:
-        resultado = np.kron(resultado, matriz)
+    Parameters:
+        M1 (np.ndarray): Matriz de tamaño (m, n1).
+        M2 (np.ndarray): Matriz de tamaño (m, n2).
+        
+    Returns:
+        np.ndarray: Resultado del producto tensorial de tamaño (m, n1 * n2).
+    """
+    # Verificar que ambas matrices tengan el mismo número de filas
+    if M1.shape[0] != M2.shape[0]:
+        raise ValueError("Las matrices deben tener el mismo número de filas para realizar el producto tensorial.")
     
-    return resultado
+    # Número de filas de M1 o M2 (m) y columnas de M1 (n1) y M2 (n2)
+    m, n1 = M1.shape
+    _, n2 = M2.shape
+    
+    # Inicializar el resultado con dimensiones (m, n1 * n2)
+    M3 = np.zeros((m, n1 * n2))
+    
+    # Iterar sobre cada fila y calcular el producto tensorial de las columnas
+    for i in range(m):
+        # Realizar el producto tensorial entre las filas i de M1 e i de M2
+        M3[i] = np.kron(M1[i], M2[i])
+    
+    return M3
+
 
 
 # Ejemplo de uso
@@ -284,18 +307,11 @@ print(matriz_resultado)
 combinaciones = generar_combinaciones_exponenciales(profundidad)
 
 # Ejemplo de uso
-resultadoA = independicia_condicional(matriz_resultado, combinaciones[0])
-resultadoB = independicia_condicional(matriz_resultado, combinaciones[1])
-resultadoC = independicia_condicional(matriz_resultado, combinaciones[2])
-matriz_condicional = [resultadoA, resultadoB, resultadoC]
-imprimir_tablas_transicion(matriz_condicional)
+resultado_indepen_cond = independicia_condicional(matriz_resultado, combinaciones)
+imprimir_tablas_transicion(resultado_indepen_cond)
 
-# Cambia la configuración de impresión para mostrar la matriz completa
-np.set_printoptions(threshold=np.inf)
-# Restablecer la configuración de impresión a la predeterminada
-np.set_printoptions(threshold=1000)
 
 
 # Ejemplo de uso Producto tensorial
-resultado_tensorial = producto_tensorial([resultadoA, resultadoB, resultadoC])
+resultado_tensorial = producto_tensorial(resultado_indepen_cond[0], resultado_indepen_cond[1])
 print(resultado_tensorial)
