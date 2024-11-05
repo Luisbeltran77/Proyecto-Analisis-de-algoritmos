@@ -313,5 +313,5 @@ imprimir_tablas_transicion(resultado_indepen_cond)
 
 
 # Ejemplo de uso Producto tensorial
-resultado_tensorial = producto_tensorial(resultado_indepen_cond[0], resultado_indepen_cond[1])
+resultado_tensorial = producto_tensorial(resultado_indepen_cond[0],resultado_indepen_cond[1])
 print(resultado_tensorial)
