@@ -58,10 +58,6 @@ resultadoC = Funciones_matrices.independicia_condicional(matriz_resultado, combi
 matriz_condicional = [resultadoA, resultadoB, resultadoC]
 Funciones_matrices.imprimir_tablas_transicion(matriz_condicional)
 
-# Cambia la configuración de impresión para mostrar la matriz completa
-np.set_printoptions(threshold=np.inf)
-# Restablecer la configuración de impresión a la predeterminada
-np.set_printoptions(threshold=1000)
 
 
 # Ejemplo de uso Producto tensorial
