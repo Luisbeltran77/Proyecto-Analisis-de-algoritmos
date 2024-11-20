@@ -41,8 +41,7 @@ for fila in resultado:
 print("Matriz de transición filtrada:")
 print(trans_matrix_filtrada)
 
-sistema_candidatos = "ABC"  # Note que D no está incluida
-matriz_resultado = Funciones_matrices.filtrar_y_marginalizar(combinaciones_t, estado_inicial, sistema_candidatos, trans_matrix)
+matriz_resultado = Funciones_matrices.filtrar_y_marginalizar(estado_inicial, sistema_candidatos, trans_matrix_filtrada)
 profundidad = len(sistema_candidatos)
 print("Matriz marginalizada: ") 
 print(matriz_resultado)

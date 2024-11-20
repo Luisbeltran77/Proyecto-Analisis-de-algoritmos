@@ -164,33 +164,24 @@ def marginalizar_matriz(trans_matrix):
     return matriz_marginalizada
 
 # Función completa que combina el filtrado y la marginalización
-def filtrar_y_marginalizar(combinaciones_originales, estado_inicial, sistema_candidatos, trans_matrix):
-    # Primero filtramos las filas como antes
-    combinaciones_filtradas = []
-    indices_originales = []
-    
-    estado = list(map(int, estado_inicial))
-    n = len(estado_inicial)
-    letras_originales = list(string.ascii_uppercase[:n])
-    letras_eliminar = set(letras_originales) - set(sistema_candidatos)
-    indices_eliminar = [letras_originales.index(letra) for letra in letras_eliminar]
-    
-    for i, fila in enumerate(combinaciones_originales):
-        incluir_fila = True
-        for indice in indices_eliminar:
-            if fila[indice] != estado[indice]:
-                incluir_fila = False
-                break
-        if incluir_fila:
-            indices_originales.append(i)
-    
-    # Filtramos las filas de la matriz
-    trans_matrix_filtrada = trans_matrix[indices_originales]
+def filtrar_y_marginalizar(estado_inicial, sistema_candidatos, trans_matrix):
+    dato = len(estado_inicial)
+    print(dato)
+    dato2 = len(sistema_candidatos)
+    print(dato2)
+    n = dato - dato2
+    matriz_marginalizada = []
+    trans_matrix_marginalizada = trans_matrix
+    if n == 0:
+        return trans_matrix_marginalizada
     
     # Marginalizamos la matriz
-    trans_matrix_marginalizada = marginalizar_matriz(trans_matrix_filtrada)
+    for _ in range(n):
+        trans_matrix_marginalizada = marginalizar_matriz(trans_matrix_marginalizada)
+        matriz_marginalizada = trans_matrix_marginalizada
     
-    return trans_matrix_marginalizada
+    return matriz_marginalizada
+
 
 def imprimir_tablas_transicion(matrices):
     """
