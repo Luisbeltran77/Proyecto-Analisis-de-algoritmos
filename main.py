@@ -23,12 +23,12 @@ trans_matrix = np.array([
 
 # Ejemplo de uso
 estado_inicial = "1000"  # Puede ser cualquier longitud
-sistema_candidatos = "ABCD"  # Puede incluir cualquier letra del estado inicial
+sistema_candidatos = "ABC"  # Puede incluir cualquier letra del estado inicial
 profundidad_inicial = len(estado_inicial)  # Nivel de profundidad
 
 combinaciones_t1 = Funciones_matrices.generar_combinaciones_exponenciales_t1(profundidad_inicial)
 combinaciones_t = Funciones_matrices.generar_combinaciones_exponenciales_t(profundidad_inicial)
-resultado, letras_restantes, trans_matrix_filtrada = Funciones_matrices.filtrar_combinaciones(combinaciones_t, estado_inicial, sistema_candidatos, trans_matrix)
+resultado, letras_restantes, trans_matrix_filtrada = Funciones_matrices.background(combinaciones_t, estado_inicial, sistema_candidatos, trans_matrix)
 
 # Imprimir resultado
 print("Sistema candidato:")
@@ -41,12 +41,15 @@ for fila in resultado:
 print("Matriz de transición filtrada:")
 print(trans_matrix_filtrada)
 
-matriz_resultado = Funciones_matrices.filtrar_y_marginalizar(estado_inicial, sistema_candidatos, trans_matrix_filtrada)
+matriz_resultado = Funciones_matrices.marginalizar_columna(estado_inicial, sistema_candidatos, trans_matrix_filtrada)
 profundidad = len(sistema_candidatos)
 print("Matriz marginalizada: ") 
 print(matriz_resultado)
 
-
+sistema_candidatos_margi = "A"
+matriz_resultado_fila = Funciones_matrices.marginalizar_fila(sistema_candidatos, sistema_candidatos_margi, matriz_resultado)
+print("Matriz marginalizada por fila: ") 
+print(matriz_resultado_fila)
 # Nivel de profundidad
 combinaciones = Funciones_matrices.generar_combinaciones_exponenciales(profundidad)
 

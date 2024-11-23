@@ -102,7 +102,7 @@ def independicia_condicional(matriz, combinacion):
 
 
 
-def filtrar_combinaciones(combinaciones_originales, estado_inicial, sistema_candidatos, trans_matrix):
+def background(combinaciones_originales, estado_inicial, sistema_candidatos, trans_matrix):
     # Convertimos el estado inicial a una lista de 0s y 1s
     estado = list(map(int, estado_inicial))
     
@@ -164,11 +164,9 @@ def marginalizar_matriz(trans_matrix):
     return matriz_marginalizada
 
 # Función completa que combina el filtrado y la marginalización
-def filtrar_y_marginalizar(estado_inicial, sistema_candidatos, trans_matrix):
+def marginalizar_columna(estado_inicial, sistema_candidatos, trans_matrix):
     dato = len(estado_inicial)
-    print(dato)
     dato2 = len(sistema_candidatos)
-    print(dato2)
     n = dato - dato2
     matriz_marginalizada = []
     trans_matrix_marginalizada = trans_matrix
@@ -220,4 +218,51 @@ def producto_tensorial(matrices):
         resultado = np.kron(resultado, matriz)
     
     return resultado
+
+
+def marginalizar_matriz_por_filas(trans_matrix):
+    """
+    Combina las filas correspondientes y redistribuye los valores de manera proporcional
+    para asegurar que la suma total de la fila no exceda 1.
+    """
+    n_filas, n_columnas = trans_matrix.shape
+    mitad_filas = n_filas // 2
+    
+    # Crear una nueva matriz con la mitad de filas
+    matriz_marginalizada = np.zeros((mitad_filas, n_columnas))
+    
+    for i in range(mitad_filas):
+        # Sumar las filas correspondientes
+        suma = trans_matrix[i, :] + trans_matrix[i + mitad_filas, :]
+        
+        # Verificar si la suma total supera 1
+        suma_total = np.sum(suma)
+        if suma_total > 1:
+            # Redistribuir proporcionalmente para que la suma total sea igual a 1
+            suma = suma / suma_total
+        
+        # Asignar la fila procesada a la matriz marginalizada
+        matriz_marginalizada[i, :] = suma
+    
+    return matriz_marginalizada
+
+
+
+# Función completa que combina el filtrado y la marginalización
+def marginalizar_fila(estado_inicial, sistema_candidatos, trans_matrix):
+    dato = len(estado_inicial)
+    dato2 = len(sistema_candidatos)
+    n = dato - dato2
+    matriz_marginalizada = []
+    trans_matrix_marginalizada = trans_matrix
+    if n == 0:
+        return trans_matrix_marginalizada
+    
+    # Marginalizamos la matriz
+    for _ in range(n):
+        trans_matrix_marginalizada = marginalizar_matriz_por_filas(trans_matrix_marginalizada)
+        matriz_marginalizada = trans_matrix_marginalizada
+    
+    return matriz_marginalizada
+
 
