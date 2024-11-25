@@ -1,5 +1,6 @@
 import numpy as np
 import string
+from itertools import product
 
 
 # Genera una secuencia de 0s y 1s con patrones repetitivos exponenciales
@@ -99,6 +100,7 @@ def independicia_condicional(matriz, combinacion):
     nueva_matriz[:, 1] = matriz[:, vector_1].sum(axis=1)  # Sumar columnas correspondientes a 1
 
     return nueva_matriz
+
 
 
 
@@ -266,3 +268,28 @@ def marginalizar_fila(estado_inicial, sistema_candidatos, trans_matrix):
     return matriz_marginalizada
 
 
+def producto_tensorial_matrices(matrices):
+    # Convertir la lista a un arreglo de NumPy
+    matrices = np.array(matrices)
+    
+    # Obtener el número de matrices, filas y columnas
+    num_matrices = matrices.shape[0]
+    num_filas = matrices.shape[1]
+    num_columnas = matrices.shape[2]
+    # Crear una matriz para almacenar los resultados
+    resultados_matriz = np.zeros((num_filas, 2**num_matrices), dtype=int)
+    # Generar todas las combinaciones de columnas para cada fila
+    for fila in range(num_filas):
+        # Generar todas las combinaciones de columnas
+        for idx in range(2**num_matrices):
+            # Convertir el índice a binario y rellenar con ceros a la izquierda
+            combinacion = [(idx >> (num_matrices - 1 - k)) & 1 for k in range(num_matrices)]  # Invertir para tener el MSB a la izquierda     
+            combinacion_invert = list(reversed(combinacion))  
+            # Obtener los valores en la fila especificada y las columnas de la combinación
+            valores = [matrices[k][fila][col] for k, col in enumerate(combinacion_invert)]
+            # Verificar si todos los valores son iguales y son 1
+            todos_iguales = all(valor == 1 for valor in valores)
+            # Almacenar el resultado en la matriz (1 si todos son iguales y son 1, 0 si no)
+            resultados_matriz[fila][idx] = 1 if todos_iguales else 0      
+            
+    return resultados_matriz
