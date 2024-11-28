@@ -1,6 +1,8 @@
 import numpy as np
 import string
 from itertools import product
+import pandas as pd
+
 
 
 # Genera una secuencia de 0s y 1s con patrones repetitivos exponenciales
@@ -293,3 +295,39 @@ def producto_tensorial_matrices(matrices):
             resultados_matriz[fila][idx] = 1 if todos_iguales else 0      
             
     return resultados_matriz
+
+def cargar_excel(ruta_archivo):
+    try:
+        print(ruta_archivo)
+        # Lee el archivo Excel
+        nombre_hoja = 'DatosRed6Nodos'
+        df_hoja1 = pd.read_excel(ruta_archivo, sheet_name=nombre_hoja)
+        rango_filas = df_hoja1.iloc[2:66, 1:13].to_numpy()
+        # Dividir las columnas en matrices de 2 columnas cada una
+        matrices = [rango_filas[:, i:i+2] for i in range(0, rango_filas.shape[1], 2)]
+        return matrices
+    except Exception as e:
+        print(f"Error al cargar el archivo: {e}")
+        return None
+
+def compare_matrices(matrices1, matrices2):
+    # Verificar que tengan el mismo número de matrices
+    if len(matrices1) != len(matrices2):
+        print(f"Diferente número de matrices: {len(matrices1)} vs {len(matrices2)}")
+        return False
+    
+    # Comparar cada matriz
+    for i, (mat1, mat2) in enumerate(zip(matrices1, matrices2)):
+        if not np.array_equal(mat1, mat2):
+            print(f"Diferencia en matriz {i}:")
+            print("Matriz 1:")
+            print(mat1)
+            print("Matriz 2:")
+            print(mat2)
+            # Mostrar dónde son diferentes
+            diff = mat1 != mat2
+            print("Índices diferentes:")
+            print(np.argwhere(diff))
+            return False
+    
+    return True
