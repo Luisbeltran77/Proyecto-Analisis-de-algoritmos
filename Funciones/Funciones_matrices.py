@@ -2,6 +2,7 @@ import numpy as np
 import string
 from itertools import product
 import pandas as pd
+from scipy.stats import wasserstein_distance
 
 
 
@@ -213,15 +214,6 @@ def imprimir_tablas_transicion(matrices):
         row = separator.join([f"{int(matrices[j][i, 0])}      {int(matrices[j][i, 1])}     " for j in range(num_matrices)])
         print(row)
 
-def producto_tensorial(matrices):
-    # Inicializa el resultado con la primera matriz
-    resultado = matrices[0]
-    
-    # Aplica el producto tensorial secuencialmente
-    for matriz in matrices[1:]:
-        resultado = np.kron(resultado, matriz)
-    
-    return resultado
 
 
 def marginalizar_matriz_por_filas(trans_matrix):
@@ -331,3 +323,103 @@ def compare_matrices(matrices1, matrices2):
             return False
     
     return True
+
+def particiones_subco(v):
+    # Lista para las particiones w
+    w = []
+
+    # Proceso para crear las particiones
+    for futuro, presente in v:
+        # Primero generar particiones para el presente (t)
+        for i in range(1, len(presente) + 1):
+            particion = ("", presente[:i])  # Vacío en futuro para particiones de presente
+            w.append(particion)
+        # Luego generar particiones para el futuro (t+1)
+        for i in range(1, len(futuro) + 1):
+            particion = (futuro[:i], presente)  # Vacío en presente para particiones de futuro
+            w.append(particion)
+    return w
+
+def complemento(futuro_completo,presente_completo,w):
+    # Calcular complementos para cada partición
+    complementos = []
+    for particion in w:
+        futuro_actual, presente_actual = particion
+        complemento_futuro = "".join(char for char in futuro_completo if char not in futuro_actual)
+        complemento_presente = "".join(char for char in presente_completo if char not in presente_actual)
+        complementos.append((complemento_futuro, complemento_presente))
+    return complementos
+
+def procesar_particiones(particiones, estado_inicial, trans_matrix_filtrada, fila, complementos, combinacion, binary_combination):
+
+    # Inicializar variables para almacenar el menor resultado, partición y complemento correspondientes
+    menor_res = float('inf')  # Inicia con infinito
+    mejor_particion = None
+    mejor_complemento = None
+
+    # Procesar cada partición
+    for particion, complemento in zip(particiones[:-1], complementos[:-1]):
+        futuro_p, presente_p = particion
+        matriz_margi_col_p = marginalizar_columna(estado_inicial, futuro_p, trans_matrix_filtrada)
+        matriz_res_p = marginalizar_fila(binary_combination, presente_p, matriz_margi_col_p)
+
+        binary_combination_p = ''.join(combinacion)
+        row_index_p = int(binary_combination_p, 2)
+
+        if 0 <= row_index_p < len(matriz_res_p):
+            row_part = matriz_res_p[row_index_p]
+        else:
+            print("El índice calculado está fuera del rango de la matriz partición.")
+            continue
+
+        futuro_c, presente_c = complemento
+        if len(presente_c) > 0:
+            matriz_margi_col_c = marginalizar_columna(estado_inicial, futuro_c, trans_matrix_filtrada)
+            matriz_res_c = marginalizar_fila(binary_combination, presente_c, matriz_margi_col_c)
+
+            binary_combination_c = ''.join(combinacion)
+            row_index_c = int(binary_combination_c, 2)
+
+            if 0 <= row_index_c < len(matriz_res_c):
+                row_com = matriz_res_c[row_index_c]
+            else:
+                print("El índice calculado está fuera del rango de la matriz complemento.")
+                continue
+
+            if len(row_part) < len(row_com):
+                particion_arr = np.pad(row_part, (0, len(row_com) - len(row_part)), constant_values=1)
+
+            producto_vect = particion_arr * row_com
+        else:
+            num_letras = len(futuro_c)
+            # Calcular el valor que debe ocupar cada posición
+            valor = 1 / num_letras
+
+            # Crear el vector con ese valor en cada posición
+            vector = np.full(num_letras, valor)
+
+            if len(row_part) < len(vector):
+                particion_arr = np.pad(row_part, (0, len(vector) - len(row_part)), constant_values=1)
+                vector_a = vector  # Usar el vector original cuando row_part es más pequeño
+
+            elif len(row_part) > len(vector):
+                # Rellenar vector con 1's para que coincida con el tamaño de row_part
+                vector_a = np.pad(vector, (0, len(row_part) - len(vector)), constant_values=1)
+                particion_arr = row_part  # Usar row_part cuando es más pequeño
+            else:
+                # Si tienen el mismo tamaño, solo usa el vector sin cambios
+                vector_a = vector
+                particion_arr = row_part
+
+            producto_vect = particion_arr * vector_a
+
+        # Calcular el resultado usando la distancia Wasserstein
+        res = wasserstein_distance(fila, producto_vect)
+
+        # Actualizar el menor resultado encontrado y almacenar partición/complemento
+        if res < menor_res:
+            menor_res = res
+            mejor_particion = particion
+            mejor_complemento = complemento
+
+    return menor_res, mejor_particion, mejor_complemento

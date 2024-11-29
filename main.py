@@ -2,31 +2,9 @@ import numpy as np
 from Funciones import Funciones_matrices
 import pandas as pd
 
-# Crear una matriz de 16x16 
-trans_matrix = np.array([
-    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0]
-    ])
-
 # Configurar NumPy para mostrar matrices completas
 np.set_printoptions(threshold=np.inf)
-
-print('esta es la matriz cargada')
-ruta = 'CasosDePrueba(3).xlsx'
+ruta = 'CasosDePrueba(4).xlsx'
 matriz_cargada = Funciones_matrices.cargar_excel(ruta)
 #print(matriz_cargada)
 
@@ -36,10 +14,17 @@ matriz_producto = Funciones_matrices.producto_tensorial_matrices(matriz_cargada)
 #print(matriz_producto)
 
 # Ejemplo de uso
-estado_inicial = "100010"  # Puede ser cualquier longitud
-sistema_candidatos = "ABCDE"  # Puede incluir cualquier letra del estado inicial
-subsistema = 'ABC|ABCD'
+estado_inicial = "10001"  # Puede ser cualquier longitud
+sistema_candidatos = "ABC"  # Puede incluir cualquier letra del estado inicial
+subsistema = 'ABC|ABC'
 profundidad_inicial = len(estado_inicial)  # Nivel de profundidad
+
+# Separar los elementos por el símbolo "|"
+futuro, presente = subsistema.split("|")
+# Crear un conjunto para guardar los pares
+v = set()
+# Agregar los elementos como un par (t+1, t)
+v.add((futuro, presente))
 
 combinaciones_t1 = Funciones_matrices.generar_combinaciones_exponenciales_t1(profundidad_inicial)
 combinaciones_t = Funciones_matrices.generar_combinaciones_exponenciales_t(profundidad_inicial)
@@ -50,8 +35,8 @@ profundidad = len(sistema_candidatos)
 #print("Matriz marginalizada: ") 
 #print(matriz_resultado)
 
-sistema_candidatos_margi = "AB"
-matriz_resultado_fila = Funciones_matrices.marginalizar_fila(sistema_candidatos, sistema_candidatos_margi, matriz_resultado)
+#sistema_candidatos_margi = "AB"
+#matriz_resultado_fila = Funciones_matrices.marginalizar_fila(sistema_candidatos, sistema_candidatos_margi, matriz_resultado)
 #print("Matriz marginalizada por fila: ") 
 #print(matriz_resultado_fila)
 # Nivel de profundidad
@@ -67,5 +52,35 @@ for i in range(profundidad):
 #producto_t = Funciones_matrices.producto_tensorial_matrices(matrices_resultantes)
 #print('producto tensorial: \n', producto_t)
 
-resul = Funciones_matrices.compare_matrices(matriz_cargada, matrices_resultantes)
-print(resul)
+particiones = Funciones_matrices.particiones_subco(v)
+complemento = Funciones_matrices.complemento(futuro,presente,particiones)
+# Imprimir las particiones y sus complementos
+
+for ve in v:
+    # Obtener los valores del estado inicial correspondientes a las posiciones
+    valores = [estado_inicial[i] for i in range(len(ve[1])) if i < len(estado_inicial)]
+
+    sistema_part0 = ve[0]
+    matriz_resultado_part = Funciones_matrices.marginalizar_columna(estado_inicial, sistema_part0, trans_matrix_filtrada)
+
+    sistema_part1 = ve[1]
+    matriz_resultado_fila_part = Funciones_matrices.marginalizar_fila(estado_inicial, sistema_part1, matriz_resultado_part)
+
+    combinacion = list(reversed(valores))
+    binary_combination = ''.join(combinacion)
+    row_index = int(binary_combination, 2)
+    if 0 <= row_index < len(matriz_resultado_fila_part):
+        row = matriz_resultado_fila_part[row_index]
+    else:
+        print("El índice calculado está fuera del rango de la matriz.")
+
+print(row)
+
+menor_res, mejor_particion, mejor_complemento = Funciones_matrices.procesar_particiones(particiones, estado_inicial, trans_matrix_filtrada, row, complemento, combinacion, binary_combination)
+
+print('----------ESTA ES LA RESPUESTA-------')
+# Al finalizar el ciclo
+print(f"El subsistema ingresado es: {subsistema}")
+print(f"El menor resultado encontrado es: {menor_res}")
+print(f"La mejor partición es: {mejor_particion}")
+print(f"El mejor complemento es: {mejor_complemento}")
