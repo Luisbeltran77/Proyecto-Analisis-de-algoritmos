@@ -94,6 +94,9 @@ def independicia_condicional(matriz, combinacion):
     # Identificar posiciones
     vector_0, vector_1 = identificar_posiciones(combinacion)
 
+    if isinstance(matriz, list):
+        matriz = np.array(matriz)
+
     # Crear una nueva matriz para almacenar los resultados
     filas = matriz.shape[0]
     nueva_matriz = np.zeros((filas, 2))
@@ -108,45 +111,42 @@ def independicia_condicional(matriz, combinacion):
 
 
 def background(combinaciones_originales, estado_inicial, sistema_candidatos, trans_matrix):
-    # Convertimos el estado inicial a una lista de 0s y 1s
-    estado = list(map(int, estado_inicial))
-    
-    # Generamos las letras originales dinámicamente según la longitud del estado inicial
-    n = len(estado_inicial)
-    letras_originales = list(string.ascii_uppercase[:n])
-    
+    # Extraemos las letras y valores del estado inicial
+    letras_originales = list(estado_inicial.keys())
+    estado = list(estado_inicial.values())
+
     # Encontramos las letras a eliminar
     letras_eliminar = set(letras_originales) - set(sistema_candidatos)
-    
-    # Creamos una lista de índices a eliminar
+
+    # Creamos una lista de índices a eliminar basándonos en las letras
     indices_eliminar = []
     for letra in letras_eliminar:
         indices_eliminar.append(letras_originales.index(letra))
-    
+
     # Filtramos las filas que cumplan con todos los valores del estado inicial
     combinaciones_filtradas = []
     indices_originales = []  # Para mantener un registro de los índices originales
-    
+
     for i, fila in enumerate(combinaciones_originales):
         incluir_fila = True
         nueva_fila = list(fila)
-        
+
         # Verificamos cada letra a eliminar
         for indice in indices_eliminar:
             if fila[indice] != estado[indice]:
                 incluir_fila = False
                 break
-        
+
         if incluir_fila:
             # Eliminamos las columnas de las letras que no están en sistema_candidatos
             for indice in sorted(indices_eliminar, reverse=True):
                 nueva_fila.pop(indice)
             combinaciones_filtradas.append(nueva_fila)
             indices_originales.append(i)
-    
+
     # Filtramos solo las filas de la matriz de transición
     trans_matrix_filtrada = trans_matrix[indices_originales]
-    
+
     return combinaciones_filtradas, [letra for letra in letras_originales if letra in sistema_candidatos], trans_matrix_filtrada
 
 
@@ -170,16 +170,24 @@ def marginalizar_matriz(trans_matrix):
 
 # Función completa que combina el filtrado y la marginalización
 def marginalizar_columna(estado_inicial, sistema_candidatos, trans_matrix):
+    #estado = list(estado_inicial.values())
+    print('este es el estado: ', estado_inicial)
+    print('este es el sistema candidato: ', sistema_candidatos)
+    print('este es la transicion: ', trans_matrix)
     dato = len(estado_inicial)
+    print('este es el dato de estado inicial: ', dato)
     dato2 = len(sistema_candidatos)
+    print('este es el dato de sistema candidato: ', dato2)
     n = dato - dato2
+    print('este es el n: ', n)
+
     matriz_marginalizada = []
     trans_matrix_marginalizada = trans_matrix
     if n == 0:
         return trans_matrix_marginalizada
     
     # Marginalizamos la matriz
-    for _ in range(n):
+    for _ in range(abs(n)):
         trans_matrix_marginalizada = marginalizar_matriz(trans_matrix_marginalizada)
         matriz_marginalizada = trans_matrix_marginalizada
     
@@ -249,8 +257,10 @@ def marginalizar_fila(estado_inicial, sistema_candidatos, trans_matrix):
     dato = len(estado_inicial)
     dato2 = len(sistema_candidatos)
     n = dato - dato2
+    print('esta es la n: ', n)
     matriz_marginalizada = []
     trans_matrix_marginalizada = trans_matrix
+    print('esta es la trans_matrix: ', trans_matrix_marginalizada)
     if n == 0:
         return trans_matrix_marginalizada
     
@@ -258,6 +268,7 @@ def marginalizar_fila(estado_inicial, sistema_candidatos, trans_matrix):
     for _ in range(n):
         trans_matrix_marginalizada = marginalizar_matriz_por_filas(trans_matrix_marginalizada)
         matriz_marginalizada = trans_matrix_marginalizada
+        print('esta es la mtr ya margi: ', matriz_marginalizada)
     
     return matriz_marginalizada
 
@@ -265,27 +276,37 @@ def marginalizar_fila(estado_inicial, sistema_candidatos, trans_matrix):
 def producto_tensorial_matrices(matrices):
     # Convertir la lista a un arreglo de NumPy
     matrices = np.array(matrices)
-    
+
+   
     # Obtener el número de matrices, filas y columnas
     num_matrices = matrices.shape[0]
     num_filas = matrices.shape[1]
-    num_columnas = matrices.shape[2]
+    print('este es el n filas: ', num_filas//2)
+    
+    # Generar todas las combinaciones ANTES de los bucles de filas
+    combinaciones = []
+    for idx in range(2**num_matrices):
+        # Convertir el índice a binario y rellenar con ceros a la izquierda
+        combinacion = [(idx >> (num_matrices - 1 - k)) & 1 for k in range(num_matrices)]  
+        combinacion_invert = list(reversed(combinacion))
+        combinaciones.append(combinacion_invert)
+    
     # Crear una matriz para almacenar los resultados
-    resultados_matriz = np.zeros((num_filas, 2**num_matrices), dtype=int)
-    # Generar todas las combinaciones de columnas para cada fila
-    for fila in range(num_filas):
-        # Generar todas las combinaciones de columnas
-        for idx in range(2**num_matrices):
-            # Convertir el índice a binario y rellenar con ceros a la izquierda
-            combinacion = [(idx >> (num_matrices - 1 - k)) & 1 for k in range(num_matrices)]  # Invertir para tener el MSB a la izquierda     
-            combinacion_invert = list(reversed(combinacion))  
+    resultados_matriz = np.zeros((num_filas//2, 2**num_matrices), dtype=int)
+    print('esta es la matriz de ceros: \n', resultados_matriz)
+    
+    # Ahora iterar por filas usando las combinaciones ya generadas
+    for fila in range(num_filas//2):
+        for idx, combinacion in enumerate(combinaciones):
             # Obtener los valores en la fila especificada y las columnas de la combinación
-            valores = [matrices[k][fila][col] for k, col in enumerate(combinacion_invert)]
+            valores = [matrices[k][fila][col] for k, col in enumerate(combinacion)]
+            
             # Verificar si todos los valores son iguales y son 1
             todos_iguales = all(valor == 1 for valor in valores)
-            # Almacenar el resultado en la matriz (1 si todos son iguales y son 1, 0 si no)
-            resultados_matriz[fila][idx] = 1 if todos_iguales else 0      
             
+            # Almacenar el resultado en la matriz 
+            resultados_matriz[fila][idx] = 1 if todos_iguales else 0      
+           
     return resultados_matriz
 
 def cargar_excel(ruta_archivo):
@@ -351,7 +372,7 @@ def complemento(futuro_completo,presente_completo,w):
     return complementos
 
 def procesar_particiones(particiones, estado_inicial, trans_matrix_filtrada, fila, complementos, combinacion, binary_combination):
-
+    
     # Inicializar variables para almacenar el menor resultado, partición y complemento correspondientes
     menor_res = float('inf')  # Inicia con infinito
     mejor_particion = None
@@ -423,3 +444,19 @@ def procesar_particiones(particiones, estado_inicial, trans_matrix_filtrada, fil
             mejor_complemento = complemento
 
     return menor_res, mejor_particion, mejor_complemento
+
+def filas_solo_ceros(matriz):
+    """
+    Identifica las filas de una matriz que contienen únicamente ceros.
+
+    Args:
+        matriz (list of list of int/float): Matriz a analizar.
+
+    Returns:
+        list of int: Lista de índices de las filas que tienen solo ceros.
+    """
+    filas_ceros = []
+    for i, fila in enumerate(matriz):
+        if all(elemento == 0 for elemento in fila):
+            filas_ceros.append(i)
+    return filas_ceros

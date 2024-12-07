@@ -9,16 +9,15 @@ matriz_cargada = Funciones_matrices.cargar_excel(ruta)
 #print(matriz_cargada)
 
 matriz_producto = Funciones_matrices.producto_tensorial_matrices(matriz_cargada)
-# Imprimir la matriz de resultados con combinaciones
-#print("Matriz de resultados:")
+print("Matriz de resultados:")
 #print(matriz_producto)
 
 # Ejemplo de uso
-estado_inicial = "10001"  # Puede ser cualquier longitud
-sistema_candidatos = "ABC"  # Puede incluir cualquier letra del estado inicial
-subsistema = 'ABC|ABC'
+estado_inicial = {'A': 1, 'B': 0, 'C': 0, 'D': 0, 'E': 1}
+sistema_candidatos = "ABCDE"  # Puede incluir cualquier letra del estado inicial
+subsistema = 'ABC|ABCDE'
 profundidad_inicial = len(estado_inicial)  # Nivel de profundidad
-
+print('esta es la profundidad: ', profundidad_inicial)
 # Separar los elementos por el símbolo "|"
 futuro, presente = subsistema.split("|")
 # Crear un conjunto para guardar los pares
@@ -29,11 +28,12 @@ v.add((futuro, presente))
 combinaciones_t1 = Funciones_matrices.generar_combinaciones_exponenciales_t1(profundidad_inicial)
 combinaciones_t = Funciones_matrices.generar_combinaciones_exponenciales_t(profundidad_inicial)
 resultado, letras_restantes, trans_matrix_filtrada = Funciones_matrices.background(combinaciones_t, estado_inicial, sistema_candidatos, matriz_producto)
+print('esta es back',trans_matrix_filtrada)
 
 matriz_resultado = Funciones_matrices.marginalizar_columna(estado_inicial, sistema_candidatos, trans_matrix_filtrada)
 profundidad = len(sistema_candidatos)
-#print("Matriz marginalizada: ") 
-#print(matriz_resultado)
+print("Matriz marginalizada: ") 
+print(matriz_resultado)
 
 #sistema_candidatos_margi = "AB"
 #matriz_resultado_fila = Funciones_matrices.marginalizar_fila(sistema_candidatos, sistema_candidatos_margi, matriz_resultado)
@@ -57,26 +57,46 @@ complemento = Funciones_matrices.complemento(futuro,presente,particiones)
 # Imprimir las particiones y sus complementos
 
 for ve in v:
-    # Obtener los valores del estado inicial correspondientes a las posiciones
-    valores = [estado_inicial[i] for i in range(len(ve[1])) if i < len(estado_inicial)]
+    # Obtener los valores del estado inicial correspondientes a las claves en ve[1]
+    valores = [estado_inicial[letra] for letra in ve[1] if letra in estado_inicial]
+     # Convertir valores en una cadena binaria
+    binary_combination = ''.join(str(valor) for valor in valores)
+    print('esta es la combi: ', binary_combination)
+    # Calcular el índice de la fila basado en la combinación binaria
+    try:
+        row_index = int(binary_combination, 2)
+    except ValueError:
+        print("Error al convertir la combinación binaria:", binary_combination)
+        continue
 
+    #print('Esto es dentro:', valores)
+
+    # Sistema parte 0: Operar sobre columnas
     sistema_part0 = ve[0]
-    matriz_resultado_part = Funciones_matrices.marginalizar_columna(estado_inicial, sistema_part0, trans_matrix_filtrada)
+    #print('sistema 0: ', sistema_part0)
+    matriz_resultado_part = Funciones_matrices.marginalizar_columna(binary_combination, sistema_part0, matriz_resultado)
 
+    # Sistema parte 1: Operar sobre filas
     sistema_part1 = ve[1]
-    matriz_resultado_fila_part = Funciones_matrices.marginalizar_fila(estado_inicial, sistema_part1, matriz_resultado_part)
+    #print('sistema 1: ', sistema_part1)
+    matriz_resultado_fila_part = Funciones_matrices.marginalizar_fila(binary_combination, sistema_part1, matriz_resultado_part)
 
-    combinacion = list(reversed(valores))
-    binary_combination = ''.join(combinacion)
-    row_index = int(binary_combination, 2)
+    # Validar el índice antes de acceder a la fila
     if 0 <= row_index < len(matriz_resultado_fila_part):
         row = matriz_resultado_fila_part[row_index]
+        print("Fila seleccionada:", row)
     else:
         print("El índice calculado está fuera del rango de la matriz.")
 
-print(row)
+print('esta es la particion',sistema_part0)
+print('esta es la matriz mar col',matriz_resultado_part)
+print('esta es la matriz mar fil',matriz_resultado_fila_part)
+print('esta es la particion',sistema_part1)
+print('este es el row: ',row)
+print('estos son los valores: ', valores)
 
-menor_res, mejor_particion, mejor_complemento = Funciones_matrices.procesar_particiones(particiones, estado_inicial, trans_matrix_filtrada, row, complemento, combinacion, binary_combination)
+
+menor_res, mejor_particion, mejor_complemento = Funciones_matrices.procesar_particiones(particiones, estado_inicial, trans_matrix_filtrada, row, complemento, binary_combination, binary_combination)
 
 print('----------ESTA ES LA RESPUESTA-------')
 # Al finalizar el ciclo
