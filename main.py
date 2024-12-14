@@ -1,7 +1,9 @@
 import numpy as np
 from Funciones import Funciones_matrices
 import pandas as pd
+import time
 
+start_time = time.time()
 # Configurar NumPy para mostrar matrices completas
 np.set_printoptions(threshold=np.inf)
 ruta = 'matriz 15x15 texto.txt'
@@ -16,7 +18,7 @@ matriz_cargada = Funciones_matrices.leer_matriz_desde_txt(ruta)
 # Ejemplo de uso
 estado_inicial = {'A': 1, 'B': 0, 'C': 0, 'D': 0, 'E': 0, 'F': 0, 'G': 0, 'H': 0, 'I': 0, 'J': 0, 'K': 0, 'L': 0, 'M': 0, 'N': 0, 'O': 0}
 sistema_candidatos = "ABCDE"  # Puede incluir cualquier letra del estado inicial
-subsistema = 'ABCDE|ABCDE'
+subsistema = 'ABCDE|ABCD'
 profundidad_inicial = len(estado_inicial)  # Nivel de profundidad
 print('esta es la profundidad: ', profundidad_inicial)
 # Separar los elementos por el símbolo "|"
@@ -33,8 +35,8 @@ print('esta es back',trans_matrix_filtrada)
 
 matriz_resultado = Funciones_matrices.marginalizar_columna(estado_inicial, sistema_candidatos, trans_matrix_filtrada)
 profundidad = len(sistema_candidatos)
-print("Matriz marginalizada: ") 
-print(matriz_resultado)
+print("Matriz marginalizada, saliiiiiiiiii: ") 
+#print(matriz_resultado)
 
 #sistema_candidatos_margi = "AB"
 #matriz_resultado_fila = Funciones_matrices.marginalizar_fila(sistema_candidatos, sistema_candidatos_margi, matriz_resultado)
@@ -43,6 +45,7 @@ print(matriz_resultado)
 # Nivel de profundidad
 combinaciones = Funciones_matrices.generar_combinaciones_exponenciales(profundidad)
 
+"""
 # Ejemplo de uso
 matrices_resultantes = []
 i=0
@@ -52,7 +55,7 @@ for i in range(profundidad):
 #print("matrices que entran:\n",matrices_resultantes)
 #producto_t = Funciones_matrices.producto_tensorial_matrices(matrices_resultantes)
 #print('producto tensorial: \n', producto_t)
-
+"""
 particiones = Funciones_matrices.particiones_subco(v)
 complemento = Funciones_matrices.complemento(futuro,presente,particiones)
 # Imprimir las particiones y sus complementos
@@ -98,7 +101,8 @@ print('estos son los valores: ', valores)
 
 
 menor_res, mejor_particion, mejor_complemento = Funciones_matrices.procesar_particiones(particiones, estado_inicial, trans_matrix_filtrada, row, complemento, binary_combination, binary_combination)
-
+end_time = time.time()
+print(f"Tiempo de ejecución: {end_time - start_time} segundos")
 print('----------ESTA ES LA RESPUESTA-------')
 # Al finalizar el ciclo
 print(f"El subsistema ingresado es: {subsistema}")

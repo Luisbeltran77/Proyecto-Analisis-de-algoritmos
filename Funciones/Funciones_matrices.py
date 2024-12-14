@@ -151,35 +151,25 @@ def background(combinaciones_originales, estado_inicial, sistema_candidatos, tra
 
 
 
-def marginalizar_matriz(trans_matrix):
+def marginalizar_matriz(trans_matrix, sistema_candidatos):
     """
-    Marginaliza la matriz sumando las columnas correspondientes de la primera
-    y segunda mitad de la matriz.
+    Filtra la matriz para que solo queden las columnas correspondientes
+    a las letras del sistema candidato.
     """
-    n_filas, n_columnas = trans_matrix.shape
-    mitad_columnas = n_columnas // 2
-    
-    # Creamos una nueva matriz con la mitad de columnas
-    matriz_marginalizada = np.zeros((n_filas, mitad_columnas))
-    
-    # Sumamos las columnas correspondientes
-    for i in range(mitad_columnas):
-        matriz_marginalizada[:, i] = trans_matrix[:, i] + trans_matrix[:, i + mitad_columnas]
-    
+    # Convertir el sistema de candidatos a un conjunto de índices basados en las letras
+    indices_candidatos = [ord(letra) - ord('A') for letra in sistema_candidatos]
+    print('estos son los indices candidatos: ', indices_candidatos)
+
+    # Filtrar las columnas de la matriz de transición para que solo queden las del sistema candidato
+    matriz_marginalizada = trans_matrix[:, indices_candidatos]
+
     return matriz_marginalizada
 
 # Función completa que combina el filtrado y la marginalización
 def marginalizar_columna(estado_inicial, sistema_candidatos, trans_matrix):
-    #estado = list(estado_inicial.values())
-    print('este es el estado: ', estado_inicial)
-    print('este es el sistema candidato: ', sistema_candidatos)
-    print('este es la transicion: ', trans_matrix)
     dato = len(estado_inicial)
-    print('este es el dato de estado inicial: ', dato)
     dato2 = len(sistema_candidatos)
-    print('este es el dato de sistema candidato: ', dato2)
     n = dato - dato2
-    print('este es el n: ', n)
 
     matriz_marginalizada = []
     trans_matrix_marginalizada = trans_matrix
@@ -187,10 +177,10 @@ def marginalizar_columna(estado_inicial, sistema_candidatos, trans_matrix):
         return trans_matrix_marginalizada
     
     # Marginalizamos la matriz
-    for _ in range(abs(n)):
-        trans_matrix_marginalizada = marginalizar_matriz(trans_matrix_marginalizada)
+    while trans_matrix_marginalizada.shape[1] > dato2:
+        trans_matrix_marginalizada = marginalizar_matriz(trans_matrix_marginalizada, sistema_candidatos)
         matriz_marginalizada = trans_matrix_marginalizada
-    
+        
     return matriz_marginalizada
 
 
@@ -281,32 +271,25 @@ def producto_tensorial_matrices(matrices):
     # Obtener el número de matrices, filas y columnas
     num_matrices = matrices.shape[0]
     num_filas = matrices.shape[1]
-    print('este es el n filas: ', num_filas//2)
-    
+    num_columnas = matrices.shape[2]  # Asegúrate de manejar columnas
+
     # Generar todas las combinaciones ANTES de los bucles de filas
     combinaciones = []
     for idx in range(2**num_matrices):
-        # Convertir el índice a binario y rellenar con ceros a la izquierda
-        combinacion = [(idx >> (num_matrices - 1 - k)) & 1 for k in range(num_matrices)]  
+        combinacion = [(idx >> (num_matrices - 1 - k)) & 1 for k in range(num_matrices)]
         combinacion_invert = list(reversed(combinacion))
         combinaciones.append(combinacion_invert)
-    
+
     # Crear una matriz para almacenar los resultados
-    resultados_matriz = np.zeros((num_filas//2, 2**num_matrices), dtype=int)
-    print('esta es la matriz de ceros: \n', resultados_matriz)
-    
+    resultados_matriz = np.zeros((num_filas, 2**num_matrices), dtype=int)
+
     # Ahora iterar por filas usando las combinaciones ya generadas
-    for fila in range(num_filas//2):
+    for fila in range(num_filas):
         for idx, combinacion in enumerate(combinaciones):
-            # Obtener los valores en la fila especificada y las columnas de la combinación
             valores = [matrices[k][fila][col] for k, col in enumerate(combinacion)]
-            
-            # Verificar si todos los valores son iguales y son 1
             todos_iguales = all(valor == 1 for valor in valores)
-            
-            # Almacenar el resultado en la matriz 
-            resultados_matriz[fila][idx] = 1 if todos_iguales else 0      
-           
+            resultados_matriz[fila][idx] = 1 if todos_iguales else 0
+
     return resultados_matriz
 
 def cargar_excel(ruta_archivo):
@@ -323,27 +306,6 @@ def cargar_excel(ruta_archivo):
         print(f"Error al cargar el archivo: {e}")
         return None
 
-def compare_matrices(matrices1, matrices2):
-    # Verificar que tengan el mismo número de matrices
-    if len(matrices1) != len(matrices2):
-        print(f"Diferente número de matrices: {len(matrices1)} vs {len(matrices2)}")
-        return False
-    
-    # Comparar cada matriz
-    for i, (mat1, mat2) in enumerate(zip(matrices1, matrices2)):
-        if not np.array_equal(mat1, mat2):
-            print(f"Diferencia en matriz {i}:")
-            print("Matriz 1:")
-            print(mat1)
-            print("Matriz 2:")
-            print(mat2)
-            # Mostrar dónde son diferentes
-            diff = mat1 != mat2
-            print("Índices diferentes:")
-            print(np.argwhere(diff))
-            return False
-    
-    return True
 
 def particiones_subco(v):
     # Lista para las particiones w
@@ -372,13 +334,10 @@ def complemento(futuro_completo,presente_completo,w):
     return complementos
 
 def procesar_particiones(particiones, estado_inicial, trans_matrix_filtrada, fila, complementos, combinacion, binary_combination):
-    
-    # Inicializar variables para almacenar el menor resultado, partición y complemento correspondientes
-    menor_res = float('inf')  # Inicia con infinito
+    menor_res = float('inf')
     mejor_particion = None
     mejor_complemento = None
 
-    # Procesar cada partición
     for particion, complemento in zip(particiones[:-1], complementos[:-1]):
         futuro_p, presente_p = particion
         matriz_margi_col_p = marginalizar_columna(estado_inicial, futuro_p, trans_matrix_filtrada)
@@ -413,31 +372,24 @@ def procesar_particiones(particiones, estado_inicial, trans_matrix_filtrada, fil
             producto_vect = particion_arr * row_com
         else:
             num_letras = len(futuro_c)
-            # Calcular el valor que debe ocupar cada posición
             valor = 1 / num_letras
-
-            # Crear el vector con ese valor en cada posición
             vector = np.full(num_letras, valor)
 
             if len(row_part) < len(vector):
                 particion_arr = np.pad(row_part, (0, len(vector) - len(row_part)), constant_values=1)
-                vector_a = vector  # Usar el vector original cuando row_part es más pequeño
+                vector_a = vector
 
             elif len(row_part) > len(vector):
-                # Rellenar vector con 1's para que coincida con el tamaño de row_part
                 vector_a = np.pad(vector, (0, len(row_part) - len(vector)), constant_values=1)
-                particion_arr = row_part  # Usar row_part cuando es más pequeño
+                particion_arr = row_part
             else:
-                # Si tienen el mismo tamaño, solo usa el vector sin cambios
                 vector_a = vector
                 particion_arr = row_part
 
             producto_vect = particion_arr * vector_a
 
-        # Calcular el resultado usando la distancia Wasserstein
         res = wasserstein_distance(fila, producto_vect)
 
-        # Actualizar el menor resultado encontrado y almacenar partición/complemento
         if res < menor_res:
             menor_res = res
             mejor_particion = particion
