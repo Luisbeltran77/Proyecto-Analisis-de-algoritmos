@@ -445,18 +445,46 @@ def procesar_particiones(particiones, estado_inicial, trans_matrix_filtrada, fil
 
     return menor_res, mejor_particion, mejor_complemento
 
-def filas_solo_ceros(matriz):
-    """
-    Identifica las filas de una matriz que contienen únicamente ceros.
+def leer_matriz_desde_txt(ruta_archivo):
+    # Inicializar una lista para almacenar las filas de la matriz
+    nueva_matriz = []
+    
+    # Leer el archivo línea por línea
+    with open(ruta_archivo, 'r') as archivo:
+        for linea in archivo:
+            # Limpiar la línea eliminando corchetes, espacios y saltos de línea
+            fila = linea.strip().strip("[]").split(",")
+            # Eliminar espacios residuales y convertir los valores a flotantes
+            fila = [float(num.strip().strip("[]")) for num in fila if num.strip()]
+            # Agregar la fila procesada a la matriz
+            nueva_matriz.append(fila)
+    
+    # Convertir la lista de listas en un DataFrame
+    matriz = pd.DataFrame(nueva_matriz)
+    matriz2 = np.array(matriz)
+    return matriz2
 
+#----------------------Segunda parte --------------------------------
+
+def generar_aristas_subsistema(subsistema):
+    """
+    Genera un conjunto de aristas desde los nodos del presente hacia los nodos del futuro.
+    
     Args:
-        matriz (list of list of int/float): Matriz a analizar.
-
+        subsistema (str): String en formato 'futuro|presente' (ejemplo: 'A|AB')
+    
     Returns:
-        list of int: Lista de índices de las filas que tienen solo ceros.
+        set: Conjunto de tuplas donde cada tupla representa una arista (origen, destino)
     """
-    filas_ceros = []
-    for i, fila in enumerate(matriz):
-        if all(elemento == 0 for elemento in fila):
-            filas_ceros.append(i)
-    return filas_ceros
+    # Separar el subsistema en futuro y presente
+    futuro, presente = subsistema.split('|')
+    
+    # Crear conjunto para almacenar las aristas
+    aristas = set()
+    
+    # Para cada nodo en el presente, crear una arista hacia cada nodo en el futuro
+    for nodo_presente in presente:
+        for nodo_futuro in futuro:
+            aristas.add((nodo_presente, nodo_futuro))
+    
+    return aristas

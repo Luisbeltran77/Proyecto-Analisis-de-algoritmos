@@ -4,18 +4,19 @@ import pandas as pd
 
 # Configurar NumPy para mostrar matrices completas
 np.set_printoptions(threshold=np.inf)
-ruta = 'CasosDePrueba(4).xlsx'
-matriz_cargada = Funciones_matrices.cargar_excel(ruta)
+ruta = 'matriz 15x15 texto.txt'
+matriz_cargada = Funciones_matrices.leer_matriz_desde_txt(ruta)
+#print('Esta es la matriz cargada')
 #print(matriz_cargada)
 
-matriz_producto = Funciones_matrices.producto_tensorial_matrices(matriz_cargada)
-print("Matriz de resultados:")
+#matriz_producto = Funciones_matrices.producto_tensorial_matrices(matriz_cargada)
+#print("Matriz de resultados:")
 #print(matriz_producto)
 
 # Ejemplo de uso
-estado_inicial = {'A': 1, 'B': 0, 'C': 0, 'D': 0, 'E': 1}
+estado_inicial = {'A': 1, 'B': 0, 'C': 0, 'D': 0, 'E': 0, 'F': 0, 'G': 0, 'H': 0, 'I': 0, 'J': 0, 'K': 0, 'L': 0, 'M': 0, 'N': 0, 'O': 0}
 sistema_candidatos = "ABCDE"  # Puede incluir cualquier letra del estado inicial
-subsistema = 'ABC|ABCDE'
+subsistema = 'ABCDE|ABCDE'
 profundidad_inicial = len(estado_inicial)  # Nivel de profundidad
 print('esta es la profundidad: ', profundidad_inicial)
 # Separar los elementos por el símbolo "|"
@@ -27,7 +28,7 @@ v.add((futuro, presente))
 
 combinaciones_t1 = Funciones_matrices.generar_combinaciones_exponenciales_t1(profundidad_inicial)
 combinaciones_t = Funciones_matrices.generar_combinaciones_exponenciales_t(profundidad_inicial)
-resultado, letras_restantes, trans_matrix_filtrada = Funciones_matrices.background(combinaciones_t, estado_inicial, sistema_candidatos, matriz_producto)
+resultado, letras_restantes, trans_matrix_filtrada = Funciones_matrices.background(combinaciones_t, estado_inicial, sistema_candidatos, matriz_cargada)
 print('esta es back',trans_matrix_filtrada)
 
 matriz_resultado = Funciones_matrices.marginalizar_columna(estado_inicial, sistema_candidatos, trans_matrix_filtrada)
@@ -104,3 +105,11 @@ print(f"El subsistema ingresado es: {subsistema}")
 print(f"El menor resultado encontrado es: {menor_res}")
 print(f"La mejor partición es: {mejor_particion}")
 print(f"El mejor complemento es: {mejor_complemento}")
+
+
+#---------------------------------Segunda parte--------------------------------
+print('---------------------------------SEGUNDA PARTE--------------------------------')
+# Generar conjunto A de aristas
+conjunto_a = Funciones_matrices.generar_aristas_subsistema(subsistema)
+print("Conjunto A de aristas:", conjunto_a)
+
